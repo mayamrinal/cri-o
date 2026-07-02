@@ -742,12 +742,13 @@ func (r *runtimeVM) StopContainer(ctx context.Context, c *Container, timeout int
 
 // shouldBeStopped checks whether the container's state permits
 // stopping. It determines if stopping the container makes sense
-// based on its current state. A container cannot be stopped if
-// it is already stopped or paused. If the container is paused,
-// the function attempts to unpause it and update its status.
+// based on its current state. A container cannot be stopped if it is already
+// stopped, paused, or never been started (in the "created" state).
+// If the container is paused,  the function attempts to unpause it and update its status.
 func (r *runtimeVM) shouldBeStopped(ctx context.Context, c *Container) error {
 	switch c.State().Status {
 	case ContainerStateStopped:
+	case ContainerStateCreated:
 		return ErrContainerStopped
 	case ContainerStatePaused:
 		log.Warnf(ctx, "Cannot stop paused container %s", c.ID())
