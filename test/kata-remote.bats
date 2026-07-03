@@ -141,6 +141,13 @@ function teardown() {
 	ctr_id=$(crictl create --with-pull "$pod_id" "$TESTDATA"/container_sleep.json "$TESTDATA"/sandbox_config.json)
 	[[ -n "$ctr_id" ]]
 
+	# Start container and stop it
+	# This is a workaround for a kata-side problem with deleting a container
+	# that was not started.
+	# To be fixed on the kata side.
+	crictl start "$ctr_id"
+	crictl stop "$ctr_id"
+
 	# Remove the container but keep the pod so its run directory (which holds the
 	# artifact store) is preserved across the restart.
 	crictl rm "$ctr_id"
@@ -154,7 +161,9 @@ function teardown() {
 	# container creation should succeed.
 	run crictl create "$pod_id" "$TESTDATA"/container_sleep.json "$TESTDATA"/sandbox_config.json
 	if [[ "$status" -eq 0 ]]; then
-		# Creation succeeded: image was found in the restored cache.
+		# Creation succeeded: image was found in the restored cache. Clean up.
+		crictl start "$output"
+		crictl stop "$output"
 		crictl rm "$output"
 	else
 		# Creation failed — verify the failure is NOT due to a missing image.
